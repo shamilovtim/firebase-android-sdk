@@ -884,4 +884,24 @@ public class QueryTest {
                 .get());
     assertEquals(asList("cg-doc2"), querySnapshotToIds(querySnapshot));
   }
+
+
+  @Test
+  public void testMultipleUpdatesWhileOfflineIssue3528() {
+    CollectionReference collection = testCollection();
+    collection.getFirestore().disableNetwork();
+
+    collection.add(map("foo", "zzyzx", "bar", "1"));
+
+    QuerySnapshot snapshot1 = waitFor(collection.get(Source.CACHE));
+    assertEquals(asList(map("foo", "zzyzx", "bar", "1")), querySnapshotToValues(snapshot1));
+    DocumentReference doc = snapshot1.getDocuments().get(0).getReference();
+
+    doc.update(map("bar", "2"));
+
+    QuerySnapshot snapshot2 = waitFor(collection.get(Source.CACHE));
+    // The assertion below fails with this message:
+    // expected:<[{foo=zzyzx, bar=2}]> but was:<[{bar=2}]>
+    assertEquals(asList(map("foo", "zzyzx", "bar", "2")), querySnapshotToValues(snapshot2));
+  }
 }
