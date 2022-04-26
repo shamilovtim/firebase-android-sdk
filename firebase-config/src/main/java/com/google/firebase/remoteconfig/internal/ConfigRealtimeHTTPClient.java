@@ -307,8 +307,10 @@ public class ConfigRealtimeHTTPClient {
         return new ListenerRegistration(this);
     }
 
-    public void removeRealtimeEventListener() {
+    public EventListener removeRealtimeEventListener() {
+        EventListener oldEventListener = this.eventListener;
         this.eventListener = null;
+        return oldEventListener;
     }
 
     public static class ListenerRegistration {
