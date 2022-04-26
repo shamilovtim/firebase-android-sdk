@@ -17,7 +17,7 @@ import com.google.firebase.appdistribution.UpdateProgress
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), FirebaseAppDistribution.FeedbackAutoTriggerListener {
     var firebaseAppDistribution: FirebaseAppDistribution = FirebaseAppDistribution.getInstance()
     var updateTask: Task<Void>? = null
     var release: AppDistributionRelease? = null
@@ -55,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         signInStatus = findViewById<TextView>(R.id.sign_in_status)
         progressPercent = findViewById<TextView>(R.id.progress_percentage)
         progressBar = findViewById<ProgressBar>(R.id.progress_bar)
+        firebaseAppDistribution.enableFeedbackAutoTrigger(this)
     }
 
     override fun onResume() {
@@ -227,5 +228,11 @@ class MainActivity : AppCompatActivity() {
         updateAppButtonBackground.visibility = if (isSignedIn) View.VISIBLE else View.GONE
         updateAppButton.visibility = View.GONE
         updateAppButtonBackground.visibility = View.GONE
+    }
+
+    override fun feedbackAutoTriggered(task: Task<FirebaseAppDistribution.Feedback>) {
+        task.onSuccessTask { firebaseAppDistribution.sendFeedback(it) }
+            .addOnSuccessListener { print("feedback sent!") }
+            .addOnFailureListener { print("failed to collect feedback! ${it.message}")}
     }
 }

@@ -24,6 +24,9 @@ import static com.google.firebase.appdistribution.TaskUtils.safeSetTaskResult;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.hardware.SensorManager;
+import androidx.activity.result.contract.ActivityResultContract;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,10 +36,12 @@ import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.appdistribution.FirebaseAppDistributionException.Status;
+import com.google.firebase.appdistribution.feedback.FeedbackActivity;
 import com.google.firebase.appdistribution.internal.LogWrapper;
 import com.google.firebase.appdistribution.internal.SignInStorage;
 import com.google.firebase.inject.Provider;
 import com.google.firebase.installations.FirebaseInstallationsApi;
+import com.squareup.seismic.ShakeDetector;
 
 /**
  * The Firebase App Distribution API provides methods to update the app to the most recent
@@ -47,7 +52,7 @@ import com.google.firebase.installations.FirebaseInstallationsApi;
  * <p>Call {@link FirebaseAppDistribution#getInstance()} to get the singleton instance of
  * FirebaseAppDistribution.
  */
-public class FirebaseAppDistribution {
+public class FirebaseAppDistribution implements ShakeDetector.Listener {
 
   private static final int UNKNOWN_RELEASE_FILE_SIZE = -1;
 
@@ -361,6 +366,45 @@ public class FirebaseAppDistribution {
     this.signInStorage.setSignInStatus(false);
   }
 
+  public Task<Feedback> collectFeedback() {
+    Intent intent = new Intent(firebaseApp.getApplicationContext(), FeedbackActivity.class);
+    lifecycleNotifier.applyToForegroundActivity(activity -> activity.startActivity(intent));
+    // TODO: How to get result? We can't start activity for result here because:
+    //     - when using startActivityForResult(), result comes back to Activity#onActivityResult()
+    //     - to use the new Activity Result APIs, you need access to a Fragment or a ComponentActivity
+    //   Instead, we might need to either show the UI on top of the current activity, or have some
+    //   other way of getting the result back to the developer.
+    return Tasks.forResult(new Feedback("I found a bug!"));
+  }
+
+  public Task<Void> sendFeedback(Feedback feedback) {
+    return Tasks.forResult(null);
+  }
+
+  public static class Feedback {
+    public final String text;
+    public Feedback(String text) {
+      this.text = text;
+    }
+  }
+
+  public interface FeedbackAutoTriggerListener {
+    void feedbackAutoTriggered(@NonNull Task<Feedback> task);
+  }
+
+  private ShakeDetector shakeDetector;
+  private FeedbackAutoTriggerListener feedbackAutoTriggerListener;
+
+  public void enableFeedbackAutoTrigger(FeedbackAutoTriggerListener listener) {
+    feedbackAutoTriggerListener = listener;
+    shakeDetector = new ShakeDetector(this);
+  }
+
+  @Override
+  public void hearShake() {
+    feedbackAutoTriggerListener.feedbackAutoTriggered(collectFeedback());
+  }
+
   @VisibleForTesting
   void onActivityResumed(Activity activity) {
     if (awaitingSignInDialogConfirmation()) {
@@ -387,6 +431,12 @@ public class FirebaseAppDistribution {
         }
       }
     }
+
+    if (shakeDetector != null) {
+      SensorManager sensorManager =
+          (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
+      shakeDetector.start(sensorManager, SensorManager.SENSOR_DELAY_NORMAL);
+    }
   }
 
   @VisibleForTesting
@@ -397,6 +447,10 @@ public class FirebaseAppDistribution {
       remakeUpdateConfirmationDialog =
           updateConfirmationDialog != null && updateConfirmationDialog.isShowing();
       dismissDialogs();
+    }
+
+    if (shakeDetector != null) {
+      shakeDetector.stop();
     }
   }
 
