@@ -366,9 +366,16 @@ public class FirebaseAppDistribution implements ShakeDetector.Listener {
     this.signInStorage.setSignInStatus(false);
   }
 
+  // Option questions:
+  //   - Should we pass in an activity here?
+  //   - How do we pass back success or failure
+  //   - How do we pass back data? (for future)
+  public Task<Void> collectAndSendFeedback() { return Tasks.forResult(null); }
+
   public Task<Feedback> collectFeedback() {
-    Intent intent = new Intent(firebaseApp.getApplicationContext(), FeedbackActivity.class);
+    // Intent intent = new Intent(firebaseApp.getApplicationContext(), FeedbackActivity.class);
     lifecycleNotifier.applyToForegroundActivity(activity -> activity.startActivity(intent));
+
     // TODO: How to get result? We can't start activity for result here because:
     //     - when using startActivityForResult(), result comes back to Activity#onActivityResult()
     //     - to use the new Activity Result APIs, you need access to a Fragment or a ComponentActivity
@@ -389,7 +396,7 @@ public class FirebaseAppDistribution implements ShakeDetector.Listener {
   }
 
   public interface FeedbackAutoTriggerListener {
-    void feedbackAutoTriggered(@NonNull Task<Feedback> task);
+    void feedbackAutoTriggered(@NonNull Task<Void> task);
   }
 
   private ShakeDetector shakeDetector;
@@ -400,9 +407,17 @@ public class FirebaseAppDistribution implements ShakeDetector.Listener {
     shakeDetector = new ShakeDetector(this);
   }
 
+  // NOTE: This adds a good amount of complexity to the SDK, especially if we are requiring
+  // developer to pass in an activity for the regular flow. This would require activity tracking to
+  // be able to launch the feedback activity, and to track the accelerometer
+  public void enableFeedbackAutoTrigger() {
+    feedbackAutoTriggerListener = listener;
+    shakeDetector = new ShakeDetector(this);
+  }
+
   @Override
   public void hearShake() {
-    feedbackAutoTriggerListener.feedbackAutoTriggered(collectFeedback());
+    feedbackAutoTriggerListener.feedbackAutoTriggered(collectAndSendFeedback());
   }
 
   @VisibleForTesting

@@ -55,7 +55,14 @@ class MainActivity : AppCompatActivity(), FirebaseAppDistribution.FeedbackAutoTr
         signInStatus = findViewById<TextView>(R.id.sign_in_status)
         progressPercent = findViewById<TextView>(R.id.progress_percentage)
         progressBar = findViewById<ProgressBar>(R.id.progress_bar)
-        firebaseAppDistribution.enableFeedbackAutoTrigger(this)
+
+        firebaseAppDistribution.enableFeedbackAutoTrigger { task ->
+            // tester just shook
+            task.onSuccessTask { feedback -> firebaseAppDistribution.sendFeedback(feedback) }
+        }
+        // firebaseAppDistribution.enableFeedbackAutoTrigger { task ->
+        //     task.addOnSuccessListener { print("cool!") }
+        // }
     }
 
     override fun onResume() {

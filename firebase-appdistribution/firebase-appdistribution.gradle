@@ -14,6 +14,7 @@
 
 plugins {
     id 'firebase-library'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
@@ -42,6 +43,8 @@ dependencies {
     implementation project(':firebase-components')
     implementation project(':firebase-installations-interop')
     implementation project(':firebase-common')
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.4'
     runtimeOnly project(':firebase-installations')
 
     testImplementation 'junit:junit:4.13.2'
@@ -55,6 +58,7 @@ dependencies {
 
     compileOnly 'com.google.auto.value:auto-value-annotations:1.6.5'
     annotationProcessor 'com.google.auto.value:auto-value:1.6.5'
+    implementation 'androidx.activity:activity-ktx:1.4.0'
     implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation "androidx.browser:browser:1.3.0"
     implementation 'com.squareup:seismic:1.0.3'
