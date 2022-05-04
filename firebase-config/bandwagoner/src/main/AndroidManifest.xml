@@ -32,7 +32,8 @@
   <application
       android:name=".MainApplication"
       android:label="Bandwagoner"
-      android:theme="@style/LightNoActionBarTheme">
+      android:theme="@style/LightNoActionBarTheme"
+      android:usesCleartextTraffic="true">
 
     <activity android:exported="true" android:name=".MainActivity">
       <intent-filter>

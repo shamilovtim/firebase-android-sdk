@@ -39,6 +39,7 @@ import com.google.firebase.installations.FirebaseInstallationsApi;
 import com.google.firebase.installations.InstallationTokenResult;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.google.firebase.remoteconfig.internal.ConfigRealtimeHTTPClient;
 
 /**
  * The main layout and logic for running Firebase Remote Config (FRC) API calls and displaying their
@@ -64,6 +65,18 @@ public class ApiFragment extends Fragment {
     super.onCreate(savedInstanceState);
 
     frc = FirebaseRemoteConfig.getInstance();
+    frc.setOnConfigUpdateListener(new ConfigRealtimeHTTPClient.EventListener() {
+      @Override
+      public void onEvent() {
+        frc.activate();
+      }
+
+      @Override
+      public void onError(Exception error) {
+
+      }
+    });
+
     frc.setConfigSettingsAsync(
         new FirebaseRemoteConfigSettings.Builder().setMinimumFetchIntervalInSeconds(0L).build());
 
