@@ -97,7 +97,7 @@ public class ConfigRealtimeHTTPClient {
         this.RETRIES_REMAINING = this.ORIGINAL_RETRIES;
 
         try {
-            this.realtimeURL = new URL(this.TEST_REALTIME_URL_STRING);
+            this.realtimeURL = new URL(getRealtimeURL("firebase"));
         } catch (MalformedURLException ex) {
             logger.info("URL is malformed");
         }
