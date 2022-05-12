@@ -327,7 +327,6 @@ public class ConfigFetchHandler {
               customHttpHeaders,
               getFirstOpenTime(),
               currentTime);
-
       if (response.getLastFetchETag() != null) {
         frcMetadata.setLastFetchETag(response.getLastFetchETag());
       }
