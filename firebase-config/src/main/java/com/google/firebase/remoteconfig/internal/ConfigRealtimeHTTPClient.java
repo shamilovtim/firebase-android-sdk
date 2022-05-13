@@ -48,7 +48,6 @@ public class ConfigRealtimeHTTPClient {
     private static final String INSTALLATIONS_AUTH_TOKEN_HEADER =
             "X-Goog-Firebase-Installations-Auth";
     private static final String X_ACCEPT_RESPONSE_STREAMING = "X-Accept-Response-Streaming";
-    private static final String TEST_REALTIME_URL_STRING = "http://10.0.2.2:8080";
     private static final Logger logger = Logger.getLogger("Real_Time_RC");
 
     private final ConfigFetchHandler configFetchHandler;
@@ -96,7 +95,8 @@ public class ConfigRealtimeHTTPClient {
         this.RETRIES_REMAINING = this.ORIGINAL_RETRIES;
 
         try {
-            this.realtimeURL = new URL(getRealtimeURL("firebase"));
+            logger.info(getRealtimeURL(namespace));
+            this.realtimeURL = new URL(getRealtimeURL(namespace));
         } catch (MalformedURLException ex) {
             logger.info("URL is malformed");
         }
@@ -171,9 +171,9 @@ public class ConfigRealtimeHTTPClient {
 
     private JSONObject createRequestBody() {
         Map<String, String> body = new HashMap<>();
-//        body.put("project",
-//                extractProjectNumberFromAppId(this.firebaseApp.getOptions().getApplicationId()));
-         body.put("project", "299394317711");
+        body.put("project",
+                extractProjectNumberFromAppId(this.firebaseApp.getOptions().getApplicationId()));
+//         body.put("project", "299394317711");
         body.put("namespace", this.namespace);
         body.put("lastKnownVersionNumber",
                 Long.toString(this.configFetchHandler.getTemplateVersionNumber()));
@@ -307,10 +307,8 @@ public class ConfigRealtimeHTTPClient {
         return new ListenerRegistration(this);
     }
 
-    public EventListener removeRealtimeEventListener() {
-        EventListener oldEventListener = this.eventListener;
+    public void removeRealtimeEventListener() {
         this.eventListener = null;
-        return oldEventListener;
     }
 
     public boolean hasEventListener() {
