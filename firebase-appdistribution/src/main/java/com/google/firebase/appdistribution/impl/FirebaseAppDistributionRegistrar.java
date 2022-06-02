@@ -75,7 +75,8 @@ public class FirebaseAppDistributionRegistrar implements ComponentRegistrar {
             new ApkUpdater(firebaseApp, new ApkInstaller()),
             new AabUpdater(),
             signInStorage,
-            lifecycleNotifier);
+            lifecycleNotifier,
+            new FeedbackManager(firebaseApp, apkHashExtractor, testerApiClient));
 
     if (context instanceof Application) {
       Application firebaseApplication = (Application) context;

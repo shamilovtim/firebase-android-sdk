@@ -55,6 +55,8 @@ class MainActivity : AppCompatActivity() {
         signInStatus = findViewById<TextView>(R.id.sign_in_status)
         progressPercent = findViewById<TextView>(R.id.progress_percentage)
         progressBar = findViewById<ProgressBar>(R.id.progress_bar)
+
+        firebaseAppDistribution.collectAndSendFeedback()
     }
 
     override fun onResume() {

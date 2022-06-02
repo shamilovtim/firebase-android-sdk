@@ -48,7 +48,7 @@ class ErrorMessages {
       "Download URL not found. This was a most likely due to a transient condition and may be corrected by retrying.";
 
   static final String HOST_ACTIVITY_INTERRUPTED =
-      "Host activity interrupted while dialog was showing. Try calling FirebaseAppDistribution#updateIfNewReleaseAvailable again.";
+      "Host activity interrupted while dialog was showing. Try calling the API again.";
 
   static final String APK_INSTALLATION_FAILED =
       "The APK failed to install or installation was canceled by the tester.";

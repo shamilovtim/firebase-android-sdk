@@ -56,6 +56,7 @@ class FirebaseAppDistributionImpl implements FirebaseAppDistribution {
   private final ApkUpdater apkUpdater;
   private final AabUpdater aabUpdater;
   private final SignInStorage signInStorage;
+  private final FeedbackManager feedbackManager;
 
   private final Object updateIfNewReleaseTaskLock = new Object();
 
@@ -86,13 +87,15 @@ class FirebaseAppDistributionImpl implements FirebaseAppDistribution {
       @NonNull ApkUpdater apkUpdater,
       @NonNull AabUpdater aabUpdater,
       @NonNull SignInStorage signInStorage,
-      @NonNull FirebaseAppDistributionLifecycleNotifier lifecycleNotifier) {
+      @NonNull FirebaseAppDistributionLifecycleNotifier lifecycleNotifier,
+      @NonNull FeedbackManager feedbackManager) {
     this.firebaseApp = firebaseApp;
     this.testerSignInManager = testerSignInManager;
     this.newReleaseFetcher = newReleaseFetcher;
     this.apkUpdater = apkUpdater;
     this.aabUpdater = aabUpdater;
     this.signInStorage = signInStorage;
+    this.feedbackManager = feedbackManager;
     this.lifecycleNotifier = lifecycleNotifier;
     lifecycleNotifier.addOnActivityDestroyedListener(this::onActivityDestroyed);
     lifecycleNotifier.addOnActivityPausedListener(this::onActivityPaused);
@@ -276,7 +279,7 @@ class FirebaseAppDistributionImpl implements FirebaseAppDistribution {
         LogWrapper.getInstance().v("New release not found.");
         return getErrorUpdateTask(
             new FirebaseAppDistributionException(
-                ErrorMessages.NOT_FOUND_ERROR, UPDATE_NOT_AVAILABLE));
+                ErrorMessages.RELEASE_NOT_FOUND_ERROR, UPDATE_NOT_AVAILABLE));
       }
       if (cachedNewRelease.getDownloadUrl() == null) {
         LogWrapper.getInstance().v("Download failed to execute.");
@@ -292,6 +295,17 @@ class FirebaseAppDistributionImpl implements FirebaseAppDistribution {
         return apkUpdater.updateApk(cachedNewRelease, showDownloadInNotificationManager);
       }
     }
+  }
+
+  @Override
+  public void collectAndSendFeedback() {
+    testerSignInManager
+        .signInTester()
+        .addOnSuccessListener(unused -> feedbackManager.collectAndSendFeedback())
+        .addOnFailureListener(
+            e ->
+                LogWrapper.getInstance()
+                    .e("Failed to sign in tester. Could not collect feedback.", e));
   }
 
   @VisibleForTesting
