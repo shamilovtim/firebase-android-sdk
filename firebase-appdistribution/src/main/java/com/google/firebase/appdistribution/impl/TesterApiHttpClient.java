@@ -38,11 +38,8 @@ import org.json.JSONObject;
 /** Client that makes FIS-authenticated GET and POST requests to the App Distribution Tester API. */
 class TesterApiHttpClient {
 
-  @VisibleForTesting static final String APP_TESTERS_HOST = "firebaseapptesters.googleapis.com";
-
-  @VisibleForTesting
-  static final String APP_TESTERS_UPLOAD_HOST = "firebaseapptesters.clients6.google.com";
-
+  private static final String APP_TESTERS_HOST = "firebaseapptesters.googleapis.com";
+  private static final String APP_TESTERS_UPLOAD_HOST = "firebaseapptesters.clients6.google.com";
   private static final String REQUEST_METHOD_GET = "GET";
   private static final String REQUEST_METHOD_POST = "POST";
   private static final String CONTENT_TYPE_HEADER_KEY = "Content-Type";
@@ -117,7 +114,9 @@ class TesterApiHttpClient {
   }
 
   /**
-   * Make a POST request to the tester API at the given path using a FIS token for auth.
+   * Make a raw file upload request to the tester API at the given path using a FIS token for auth.
+   *
+   * <p>Uploads the file with gzip encoding.
    *
    * @return the response body
    */
@@ -147,8 +146,6 @@ class TesterApiHttpClient {
       for (Map.Entry<String, String> e : extraHeaders.entrySet()) {
         connection.addRequestProperty(e.getKey(), e.getValue());
       }
-      ;
-      connection.getOutputStream();
       GZIPOutputStream gzipOutputStream = new GZIPOutputStream(connection.getOutputStream());
       try {
         gzipOutputStream.write(requestBody);
