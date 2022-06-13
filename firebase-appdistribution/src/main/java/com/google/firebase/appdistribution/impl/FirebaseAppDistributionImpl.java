@@ -18,12 +18,16 @@ import static com.google.firebase.appdistribution.FirebaseAppDistributionExcepti
 import static com.google.firebase.appdistribution.FirebaseAppDistributionException.Status.AUTHENTICATION_FAILURE;
 import static com.google.firebase.appdistribution.FirebaseAppDistributionException.Status.HOST_ACTIVITY_INTERRUPTED;
 import static com.google.firebase.appdistribution.FirebaseAppDistributionException.Status.UPDATE_NOT_AVAILABLE;
+import static com.google.firebase.appdistribution.impl.FeedbackActivity.RELEASE_NAME_KEY;
 import static com.google.firebase.appdistribution.impl.TaskUtils.safeSetTaskException;
 import static com.google.firebase.appdistribution.impl.TaskUtils.safeSetTaskResult;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -295,6 +299,38 @@ class FirebaseAppDistributionImpl implements FirebaseAppDistribution {
         return apkUpdater.updateApk(cachedNewRelease, showDownloadInNotificationManager);
       }
     }
+  }
+
+  @Override
+  public void collectAndSendFeedback() {
+    testerSignInManager
+        .signInTester()
+        .addOnFailureListener(
+            e ->
+                LogWrapper.getInstance()
+                    .e("Failed to sign in tester. Could not collect feedback.", e))
+        .onSuccessTask(unused -> releaseIdentifier.identifyRelease())
+        .onSuccessTask(this::launchFeedbackActivity)
+        .addOnFailureListener(e -> LogWrapper.getInstance().e("Failed to launch feedback flow", e));
+  }
+
+  private Task<Void> launchFeedbackActivity(String releaseName) {
+    return lifecycleNotifier.applyToForegroundActivity(
+        activity -> {
+          Intent intent = new Intent(activity, FeedbackActivity.class);
+          intent.putExtra(RELEASE_NAME_KEY, releaseName);
+          activity.startActivity(intent);
+        });
+  }
+
+  // TODO(lkellogg): Actually prompt and collect feedback
+  private Task<String> collectFeedbackText() {
+    return Tasks.forResult("This app is cool!");
+  }
+
+  // TODO(lkellogg): Actually take a screenshot
+  private Task<Bitmap> takeScreenshot() {
+    return Tasks.forResult(Bitmap.createBitmap(400, 400, Config.RGB_565));
   }
 
   @VisibleForTesting

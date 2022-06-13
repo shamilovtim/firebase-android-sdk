@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var signOutButtonBackground: AppCompatButton
     lateinit var checkForUpdateButtonBackground: AppCompatButton
     lateinit var updateAppButtonBackground: AppCompatButton
+    lateinit var feedbackButton: AppCompatButton
     lateinit var progressPercentage: TextView
     lateinit var signInStatus: TextView
     lateinit var progressPercent: TextView
@@ -51,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         signOutButtonBackground = findViewById<AppCompatButton>(R.id.sign_out2)
         checkForUpdateButtonBackground = findViewById<AppCompatButton>(R.id.check_for_update2)
         updateAppButtonBackground = findViewById<AppCompatButton>(R.id.update_app2)
+        feedbackButton = findViewById<AppCompatButton>(R.id.feedbackButton)
         progressPercentage = findViewById<TextView>(R.id.progress_percentage)
         signInStatus = findViewById<TextView>(R.id.sign_in_status)
         progressPercent = findViewById<TextView>(R.id.progress_percentage)
@@ -163,6 +165,10 @@ class MainActivity : AppCompatActivity() {
             executorService.execute {
                 firebaseAppDistribution.updateApp().addOnProgressListener { progressListener(it) }
             }
+        }
+
+        feedbackButton.setOnClickListener {
+            firebaseAppDistribution.collectAndSendFeedback()
         }
     }
 

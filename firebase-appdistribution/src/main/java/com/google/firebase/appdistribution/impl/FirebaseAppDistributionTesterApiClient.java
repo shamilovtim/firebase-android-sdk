@@ -16,6 +16,7 @@ package com.google.firebase.appdistribution.impl;
 
 import static com.google.firebase.appdistribution.impl.TaskUtils.runAsyncInTask;
 
+import android.graphics.Bitmap;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import com.google.android.gms.tasks.Task;
@@ -27,6 +28,7 @@ import com.google.firebase.appdistribution.FirebaseAppDistributionException.Stat
 import com.google.firebase.inject.Provider;
 import com.google.firebase.installations.FirebaseInstallationsApi;
 import com.google.firebase.installations.InstallationTokenResult;
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import org.json.JSONArray;
@@ -58,6 +60,7 @@ class FirebaseAppDistributionTesterApiClient {
   private static final String FIND_RELEASE_TAG = "Finding installed release";
   private static final String CREATE_FEEDBACK_TAG = "Creating feedback";
   private static final String COMMIT_FEEDBACK_TAG = "Committing feedback";
+  private static final String UPLOAD_SCREENSHOT_TAG = "Uploading screenshot";
 
   private final FirebaseApp firebaseApp;
   private final Provider<FirebaseInstallationsApi> firebaseInstallationsApiProvider;
@@ -154,6 +157,27 @@ class FirebaseAppDistributionTesterApiClient {
           JSONObject responseBody =
               testerApiHttpClient.makePostRequest(CREATE_FEEDBACK_TAG, path, token, requestBody);
           return parseJsonFieldFromResponse(responseBody, "name");
+        });
+  }
+
+  /**
+   * Attaches a screenshot to feedback.
+   *
+   * @return a {@link Task} containing the feedback name, for convenience when chaining subsequent
+   *     requests off of this task
+   */
+  Task<String> attachScreenshot(String feedbackName, Bitmap screenshot) {
+    return runWithFidAndToken(
+        (unused, token) -> {
+          LogWrapper.getInstance().i("Uploading screenshot for feedback: " + feedbackName);
+          // String path = String.format("upload/v1alpha/%s:uploadArtifact?type=SCREENSHOT",
+          // feedbackName);
+          String path = String.format("upload/v1alpha/%s:uploadArtifact", feedbackName);
+          ByteArrayOutputStream stream = new ByteArrayOutputStream();
+          screenshot.compress(Bitmap.CompressFormat.PNG, 100, stream);
+          byte[] bytes = stream.toByteArray();
+          testerApiHttpClient.makeUploadRequest(UPLOAD_SCREENSHOT_TAG, path, token, bytes);
+          return feedbackName;
         });
   }
 
