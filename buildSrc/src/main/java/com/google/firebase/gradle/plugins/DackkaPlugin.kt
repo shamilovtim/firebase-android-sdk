@@ -68,28 +68,41 @@ abstract class DackkaPlugin : Plugin<Project> {
         )
     }
 
-    private fun registerGenerateDackkaDocumentationTask(project: Project) =
-        project.tasks.register<GenerateDocumentationTask>("generateDackkaDocumentation") {
-            with(project.extensions.getByType<LibraryExtension>()) {
-                libraryVariants.all {
-                    if (name == "release") {
-                        mustRunAfter("createFullJarRelease")
-                        dependsOn("createFullJarRelease")
+    private fun registerGenerateDackkaDocumentationTask(project: Project): Provider<GenerateDocumentationTask> {
 
-                        val classpath = project.provider {
-                            runtimeConfiguration.getJars() + project.javadocConfig.getJars() + bootClasspath
-                        }
-
-                        val sourcesForJava = sourceSets.flatMap {
-                            it.javaDirectories.map { it.absoluteFile } + projectSpecificSources(project)
-                        }
-
-                        // this will become useful with the agp upgrade, as they're separate in 7.x+
+        val isKotlin = project.plugins.hasPlugin("kotlin-android")
+        val android = project.extensions.getByType<LibraryExtension>()
+        val mainSourceSet = android.sourceSets.getByName("main")
+        val docStubs = project.tasks
+            .register<GenerateStubsTask>("docStubs1") {}
+        val docsTask =
+            project.tasks.register<GenerateDocumentationTask>("generateDackkaDocumentation") {
+                mustRunAfter("createFullJarRelease")
+                dependsOn("createFullJarRelease")
+            }
+        with(project.extensions.getByType<LibraryExtension>()) {
+            libraryVariants.all {
+                val classpath =
+                    runtimeConfiguration.getJars() + project.javadocConfig.getJars() + bootClasspath
+                if (name == "release") {
+                    val sourcesForJava = sourceSets.flatMap {
+                        it.javaDirectories.map { it.absoluteFile } + projectSpecificSources(project)
+                    }
+                    docStubs.configure {
+                        classPath = project.files(classpath)
+                        sources.set(project.provider { sourcesForJava })
+                    }
+                    docsTask.configure {
                         val sourcesForKotlin = emptyList<File>()
-                        val excludedFiles = emptyList<File>() + projectSpecificSuppressedFiles(project)
+                        val excludedFiles =
+                            emptyList<File>() + projectSpecificSuppressedFiles(project)
 
                         dependencies.set(classpath)
-                        javaSources.set(sourcesForJava)
+                        javaSources.set(if (isKotlin) project.provider { sourcesForJava } else docStubs.map {
+                            listOf(
+                                it.outputDir
+                            )
+                        })
                         kotlinSources.set(sourcesForKotlin)
                         suppressedFiles.set(excludedFiles)
 
@@ -98,6 +111,8 @@ abstract class DackkaPlugin : Plugin<Project> {
                 }
             }
         }
+        return docsTask
+    }
 
     // TODO(b/243534168): Remove when fixed
     private fun projectSpecificSources(project: Project) =

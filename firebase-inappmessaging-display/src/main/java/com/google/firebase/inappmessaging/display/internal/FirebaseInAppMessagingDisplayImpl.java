@@ -17,6 +17,9 @@ package com.google.firebase.inappmessaging.display.internal;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+
 import com.google.firebase.inappmessaging.FirebaseInAppMessagingDisplay;
 import com.google.firebase.inappmessaging.FirebaseInAppMessagingDisplayCallbacks;
 import com.google.firebase.inappmessaging.model.InAppMessage;
@@ -29,7 +32,7 @@ public class FirebaseInAppMessagingDisplayImpl
 
   @Override
   public void displayMessage(
-      InAppMessage inAppMessage, FirebaseInAppMessagingDisplayCallbacks callbacks) {}
+          @NonNull InAppMessage inAppMessage, @NonNull FirebaseInAppMessagingDisplayCallbacks callbacks) {}
 
   /** @hide */
   @Override
